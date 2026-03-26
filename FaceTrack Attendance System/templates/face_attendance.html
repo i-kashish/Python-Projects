@@ -1,0 +1,292 @@
+{% extends 'layout.html' %}
+
+{% block title %}Face Attendance{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Face Recognition Attendance</h6>
+                    <div>
+                        <button id="startCamera" class="btn btn-primary">
+                            <i class="fas fa-camera"></i> Start Camera
+                        </button>
+                        <button id="stopCamera" class="btn btn-danger" disabled>
+                            <i class="fas fa-stop-circle"></i> Stop Camera
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="video-container mb-4">
+                                <div id="cameraPlaceholder" class="text-center p-5 border rounded">
+                                    <i class="fas fa-camera fa-5x mb-3 text-muted"></i>
+                                    <h5>Camera feed will appear here</h5>
+                                    <p class="text-muted">Click "Start Camera" to begin</p>
+                                </div>
+                                <video id="videoElement" style="display: none; width: 100%; height: auto; max-height: 480px;" autoplay></video>
+                                <canvas id="canvasElement" style="display: none; width: 100%; height: auto; max-height: 480px;"></canvas>
+                            </div>
+                            <div class="alert alert-info" role="alert">
+                                <i class="fas fa-info-circle"></i> Position your face within the frame for recognition
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card mb-4">
+                                <div class="card-header py-3">
+                                    <h6 class="m-0 font-weight-bold text-primary">Recognition Status</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recognitionStatus" class="text-center">
+                                    <div class="mb-3">
+                                        <span id="statusBadge" class="badge bg-secondary p-2">Waiting</span>
+                                    </div>
+                                    <div id="recognizedName" class="h4 mb-0 font-weight-bold text-gray-800">-</div>
+                                    <div id="recognitionTime" class="small text-gray-500 mt-1">-</div>
+                                </div>
+                                <hr>
+                                <div class="text-center mt-3">
+                                    <button id="markAttendanceBtn" class="btn btn-success btn-block" disabled>
+                                        <i class="fas fa-check-circle me-2"></i>Mark Attendance
+                                    </button>
+                                </div>
+                                    <div class="text-center">
+                                        <button id="markAttendance" class="btn btn-success btn-block" disabled>
+                                            <i class="fas fa-check-circle"></i> Mark Attendance
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header py-3">
+                                    <h6 class="m-0 font-weight-bold text-primary">Recent Attendance</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recentAttendance">
+                                        <div class="text-center text-muted">
+                                            <p>No recent attendance records</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const startCameraBtn = document.getElementById('startCamera');
+        const stopCameraBtn = document.getElementById('stopCamera');
+        const markAttendanceBtn = document.getElementById('markAttendance');
+        const videoElement = document.getElementById('videoElement');
+        const canvasElement = document.getElementById('canvasElement');
+        const cameraPlaceholder = document.getElementById('cameraPlaceholder');
+        const recognitionStatus = document.getElementById('recognitionStatus');
+        const recognizedName = document.getElementById('recognizedName');
+        const recognitionTime = document.getElementById('recognitionTime');
+        const recentAttendance = document.getElementById('recentAttendance');
+        
+        let stream = null;
+        let recognitionInterval = null;
+        let currentlyRecognized = null;
+        
+        // Start camera
+        startCameraBtn.addEventListener('click', async function() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoElement.srcObject = stream;
+                videoElement.style.display = 'block';
+                cameraPlaceholder.style.display = 'none';
+                startCameraBtn.disabled = true;
+                stopCameraBtn.disabled = false;
+                markAttendanceBtn.disabled = false;
+                
+                // Start face recognition
+                startFaceRecognition();
+            } catch (err) {
+                alert('Error accessing camera: ' + err.message);
+                console.error('Error accessing camera:', err);
+            }
+        });
+        
+        // Stop camera
+        stopCameraBtn.addEventListener('click', function() {
+            stopCamera();
+        });
+        
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                videoElement.srcObject = null;
+                videoElement.style.display = 'none';
+                cameraPlaceholder.style.display = 'block';
+                startCameraBtn.disabled = false;
+                stopCameraBtn.disabled = true;
+                markAttendanceBtn.disabled = true;
+                
+                // Stop face recognition
+                stopFaceRecognition();
+            }
+        }
+        
+        // Start face recognition
+        function startFaceRecognition() {
+            recognitionStatus.innerHTML = `
+                <div class="mb-3">
+                    <span class="badge bg-primary p-2">Recognizing...</span>
+                </div>
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            `;
+            
+            // Simulate face recognition with server calls
+            recognitionInterval = setInterval(function() {
+                if (videoElement.srcObject) {
+                    // Capture frame from video
+                    const context = canvasElement.getContext('2d');
+                    canvasElement.width = videoElement.videoWidth;
+                    canvasElement.height = videoElement.videoHeight;
+                    context.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+                    
+                    // Convert canvas to blob and send to server
+                    canvasElement.toBlob(function(blob) {
+                        const formData = new FormData();
+                        formData.append('image', blob, 'capture.jpg');
+                        
+                        fetch('/recognize_face', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                image: canvasElement.toDataURL('image/jpeg')
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.recognized) {
+                                recognitionStatus.innerHTML = `
+                                    <div class="mb-3">
+                                        <span class="badge bg-success p-2">Recognized</span>
+                                    </div>
+                                `;
+                                recognizedName.textContent = data.name;
+                                recognitionTime.textContent = new Date().toLocaleTimeString();
+                                currentlyRecognized = data.name;
+                            } else {
+                                recognitionStatus.innerHTML = `
+                                    <div class="mb-3">
+                                        <span class="badge bg-warning p-2">Not Recognized</span>
+                                    </div>
+                                `;
+                                recognizedName.textContent = "Unknown";
+                                recognitionTime.textContent = new Date().toLocaleTimeString();
+                                currentlyRecognized = null;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error recognizing face:', error);
+                            recognitionStatus.innerHTML = `
+                                <div class="mb-3">
+                                    <span class="badge bg-danger p-2">Error</span>
+                                </div>
+                            `;
+                        });
+                    }, 'image/jpeg');
+                }
+            }, 2000); // Check every 2 seconds
+        }
+        
+        // Stop face recognition
+        function stopFaceRecognition() {
+            if (recognitionInterval) {
+                clearInterval(recognitionInterval);
+                recognitionInterval = null;
+            }
+            
+            recognitionStatus.innerHTML = `
+                <div class="mb-3">
+                    <span class="badge bg-secondary p-2">Stopped</span>
+                </div>
+            `;
+            recognizedName.textContent = "-";
+            recognitionTime.textContent = "-";
+            currentlyRecognized = null;
+        }
+        
+        // Mark attendance
+        markAttendanceBtn.addEventListener('click', function() {
+            if (currentlyRecognized) {
+                fetch('/mark_attendance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: currentlyRecognized
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Attendance marked successfully!');
+                        updateRecentAttendance();
+                    } else {
+                        alert('Error marking attendance: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking attendance:', error);
+                    alert('Error marking attendance. Please try again.');
+                });
+            } else {
+                alert('No person recognized. Cannot mark attendance.');
+            }
+        });
+        
+        // Update recent attendance
+        function updateRecentAttendance() {
+            fetch('/recent_attendance')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.records && data.records.length > 0) {
+                        let html = '<ul class="list-group">';
+                        data.records.forEach(record => {
+                            html += `
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${record.name}</strong>
+                                        <div class="small text-muted">${record.date} ${record.time}</div>
+                                    </div>
+                                    <span class="badge bg-success rounded-pill">Present</span>
+                                </li>
+                            `;
+                        });
+                        html += '</ul>';
+                        recentAttendance.innerHTML = html;
+                    } else {
+                        recentAttendance.innerHTML = `
+                            <div class="text-center text-muted">
+                                <p>No recent attendance records</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching recent attendance:', error);
+                });
+        }
+        
+        // Initial load of recent attendance
+        updateRecentAttendance();
+    });
+</script>
+{% endblock %}

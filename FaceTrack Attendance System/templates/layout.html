@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Attendance | Premium Edition</title>
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- FullCalendar JS for Interactive Calendar -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --secondary: #64748b;
+            --success: #10b981;
+            --info: #0ea5e9;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            --font-main: 'Outfit', sans-serif;
+        }
+
+        [data-bs-theme="dark"] {
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: var(--bg);
+            color: var(--secondary);
+            min-height: 100vh;
+            transition: background 0.5s ease;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Classes */
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            border-radius: 1.25rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        .navbar-glass {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0.75rem 1.5rem;
+            border-radius: 1rem;
+            margin: 1rem;
+            width: calc(100% - 2rem);
+            z-index: 1050;
+        }
+
+        [data-bs-theme="dark"] .navbar-glass {
+            background: rgba(15, 23, 42, 0.6);
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--info) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.05rem;
+        }
+
+        .nav-link {
+            font-weight: 600;
+            color: var(--secondary);
+            margin: 0 0.25rem;
+            border-radius: 0.75rem;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--primary) !important;
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        /* Premium Buttons */
+        .btn-premium {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 0.85rem;
+            padding: 0.75rem 1.75rem;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .btn-premium:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+            color: white;
+        }
+
+        .btn-outline-premium {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            border-radius: 0.85rem;
+            padding: 0.65rem 1.65rem;
+            font-weight: 700;
+            transition: all 0.3s;
+        }
+
+        .btn-outline-premium:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Form Styling */
+        .form-control {
+            border-radius: 0.85rem;
+            padding: 0.8rem 1.2rem;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.5);
+            transition: all 0.3s;
+        }
+
+        [data-bs-theme="dark"] .form-control {
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        .form-control:focus {
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+            border-color: var(--primary);
+            background: white;
+        }
+
+        /* Animations */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-up {
+            animation: slideInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .animate-pop {
+            animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes pulse-soft {
+            0% {
+                box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+            }
+        }
+
+        .pulse-primary {
+            animation: pulse-soft 2s infinite;
+        }
+
+        /* Modal Pop Effect Override */
+        .modal.fade .modal-dialog {
+            transform: scale(1);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .modal.fade:not(.show) .modal-dialog {
+            transform: scale(0.9);
+        }
+
+        /* Ripple Effect */
+        .ripple {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple-animation 0.6s linear;
+            pointer-events: none;
+        }
+
+        @keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        .btn-premium,
+        .btn-outline-premium,
+        .dropdown-item {
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Theme Toggle Custom */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        .theme-switch {
+            cursor: pointer;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 1rem;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            transition: all 0.3s;
+        }
+
+        .theme-switch:hover {
+            background: var(--primary);
+            color: white;
+            transform: rotate(15deg);
+        }
+
+        .alert {
+            border-radius: 1rem;
+            border: none;
+            box-shadow: var(--glass-shadow);
+        }
+    </style>
+</head>
+
+<body class="animate-up">
+    <div class="container-fluid p-0">
+        {% if session.get('username') %}
+        <nav class="navbar navbar-expand-lg navbar-glass">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/dashboard">
+                    <i class="fas fa-fingerprint me-2"></i>SMART ATTENDANCE
+                </a>
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/dashboard' %}active{% endif %}"
+                                href="/dashboard">
+                                <i class="fas fa-grid-2 me-1"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/kiosk' %}active{% endif %}" href="/kiosk">
+                                <i class="fas fa-fingerprint me-1"></i> Mark Attendance
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/attendance' %}active{% endif %}"
+                                href="/attendance">
+                                <i class="fas fa-calendar-check me-1"></i> Attendance
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == '/students' %}active{% endif %}" href="/students">
+                                <i class="fas fa-user-group me-1"></i> Students
+                            </a>
+                        </li>
+                    </ul>
+                    <div class="d-flex align-items-center">
+                        <div class="theme-switch me-3" id="darkModeToggle">
+                            <i class="fas fa-moon"></i>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-premium dropdown-toggle border-0" type="button"
+                                data-bs-toggle="dropdown">
+                                <i class="fas fa-circle-user me-2"></i>{{ session.get('username') }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end glass-card border-0 p-2">
+                                <li><a class="dropdown-item rounded-3" href="/export"><i
+                                            class="fas fa-file-export me-2"></i>Export Logs</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item rounded-3 text-danger" href="/logout"><i
+                                            class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        {% endif %}
+
+        <div class="container mt-4">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show animate-up"
+                role="alert">
+                <i
+                    class="fas {% if category == 'success' %}fa-circle-check{% else %}fa-circle-exclamation{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const htmlElement = document.documentElement;
+            const icon = darkModeToggle ? darkModeToggle.querySelector('i') : null;
+
+            // Theme Logic
+            function updateTheme(isDark) {
+                if (isDark) {
+                    htmlElement.setAttribute('data-bs-theme', 'dark');
+                    if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    htmlElement.setAttribute('data-bs-theme', 'light');
+                    if (icon) icon.classList.replace('fa-sun', 'fa-moon');
+                    localStorage.setItem('theme', 'light');
+                }
+            }
+
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            updateTheme(savedTheme === 'dark' || (!savedTheme && prefersDark));
+
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('click', () => {
+                    const isDark = htmlElement.getAttribute('data-bs-theme') === 'dark';
+                    updateTheme(!isDark);
+                });
+            }
+
+            // Global stagger animation for cards
+            const cards = document.querySelectorAll('.glass-card, .stats-card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${(index + 1) * 0.1}s`;
+                card.classList.add('animate-up');
+            });
+
+            // Ripple Effect Logic
+            function createRipple(event) {
+                const button = event.currentTarget;
+                const circle = document.createElement("span");
+                const diameter = Math.max(button.clientWidth, button.clientHeight);
+                const radius = diameter / 2;
+
+                circle.style.width = circle.style.height = `${diameter}px`;
+                circle.style.left = `${event.clientX - button.getBoundingClientRect().left - radius}px`;
+                circle.style.top = `${event.clientY - button.getBoundingClientRect().top - radius}px`;
+                circle.classList.add("ripple");
+
+                const ripple = button.getElementsByClassName("ripple")[0];
+                if (ripple) { ripple.remove(); }
+                button.appendChild(circle);
+            }
+
+            const rippleElements = document.querySelectorAll('.btn-premium, .btn-outline-premium, .btn-action');
+            rippleElements.forEach(btn => btn.addEventListener('click', createRipple));
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

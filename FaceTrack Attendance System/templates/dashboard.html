@@ -1,0 +1,562 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+    .welcome-banner {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        border-radius: 1.5rem;
+        padding: 2.5rem;
+        color: white;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+    }
+
+    .welcome-banner::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        overflow: hidden;
+    }
+
+    .student-avatar {
+        width: 40px;
+        height: 40px;
+        background: var(--primary-light);
+        color: var(--primary);
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.1rem;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    tr:hover .student-avatar {
+        transform: scale(1.2) rotate(5deg);
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2);
+    }
+
+    .stats-card-premium {
+        padding: 1.5rem;
+        border-radius: 1.5rem;
+        color: white;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stats-card-premium i {
+        position: absolute;
+        right: -10px;
+        bottom: -10px;
+        font-size: 5rem;
+        opacity: 0.15;
+    }
+
+    .bg-gradient-indigo {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    }
+
+    .bg-gradient-emerald {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .bg-gradient-amber {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .bg-gradient-sky {
+        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    }
+
+    .bg-gradient-rose {
+        background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        opacity: 0.9;
+    }
+
+    .stat-value {
+        font-size: 2.2rem;
+        font-weight: 800;
+    }
+
+    .chart-container {
+        min-height: 350px;
+    }
+
+    .table-premium thead th {
+        background: rgba(99, 102, 241, 0.05);
+        border: none;
+        color: var(--primary);
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        padding: 1rem;
+    }
+
+    .table-premium tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    /* Custom Trends Toggle Styling */
+    .trends-toggle-group {
+        border: 2px solid var(--primary);
+        border-radius: 1rem;
+        padding: 4px;
+        display: inline-flex;
+        background: transparent;
+        gap: 4px;
+    }
+
+    .trends-toggle-btn {
+        border: 2px solid transparent !important;
+        background: transparent;
+        color: var(--primary);
+        padding: 0.4rem 1.2rem;
+        border-radius: 0.75rem;
+        font-weight: 700;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 0.85rem;
+    }
+
+    .trends-toggle-btn:hover {
+        background: rgba(99, 102, 241, 0.05);
+    }
+
+    .trends-toggle-btn.active {
+        background: white !important;
+        color: #1e293b !important;
+        border: 2px solid #1e293b !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    /* FullCalendar Style Overrides */
+    #calendar {
+        height: 600px;
+        background: white;
+        padding: 20px;
+        border-radius: 1rem;
+    }
+    .fc-event { cursor: pointer; border-radius: 4px; padding: 2px 5px; }
+    .fc-header-toolbar { padding-bottom: 15px; }
+    .fc-daygrid-day.fc-day-today { background: rgba(99, 102, 241, 0.05) !important; }
+    
+    /* Date Image Card */
+    .date-image-card {
+        background: white;
+        border-radius: 1.25rem;
+        padding: 10px 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    .date-image-card:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 12px 30px rgba(99, 102, 241, 0.2);
+    }
+    .date-icon-box {
+        background: var(--primary);
+        color: white;
+        width: 45px;
+        height: 45px;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    .date-text-box { text-align: left; }
+    .date-label { font-size: 0.7rem; color: var(--secondary); font-weight: 700; text-transform: uppercase; margin: 0; }
+    .date-value { font-size: 1.1rem; color: var(--primary-dark); font-weight: 800; margin: 0; line-height: 1; }
+    /* Holiday Calendar Styling */
+    .holiday-modal-content {
+        background: var(--bg);
+        border-radius: 2rem;
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--glass-shadow);
+        overflow: hidden;
+    }
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        padding: 1rem;
+    }
+    .month-container {
+        background: var(--card-bg);
+        border-radius: 1.25rem;
+        padding: 1rem;
+        border: 1px solid var(--glass-border);
+        transition: transform 0.3s ease;
+    }
+    .month-container:hover { transform: translateY(-5px); }
+    .month-name {
+        color: var(--primary);
+        font-weight: 800;
+        text-align: center;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .days-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        text-align: center;
+        font-size: 0.8rem;
+    }
+    .day-header { font-weight: 700; color: var(--secondary); opacity: 0.6; padding-bottom: 5px; }
+    .day-cell {
+        padding: 5px 0;
+        border-radius: 8px;
+        position: relative;
+        font-weight: 500;
+    }
+    .is-holiday {
+        background: rgba(239, 44, 44, 0.1);
+        color: #ef4444;
+        font-weight: 800;
+        cursor: help;
+    }
+    .is-holiday::after {
+        content: '';
+        position: absolute;
+        bottom: 2px; left: 50%;
+        transform: translateX(-50%);
+        width: 4px; height: 4px;
+        background: #ef4444;
+        border-radius: 50%;
+    }
+    .holiday-legend {
+        border-top: 1px solid var(--glass-border);
+        padding-top: 1rem;
+        margin-top: 1rem;
+    }
+</style>
+
+<div class="welcome-banner animate-up">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="fw-800 mb-2">Welcome back, {{ session.username }}!</h1>
+            <p class="lead mb-0 opacity-75">Your Smart Attendance system is monitoring and generating insights for
+                today.</p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <div class="date-image-card" id="dateCard" data-bs-toggle="modal" data-bs-target="#holidayModal">
+                <div class="date-icon-box">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="date-text-box">
+                    <p class="date-label">Current Date</p>
+                    <p class="date-value">📅 {{ current_date }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-xl col-md-4">
+        <div class="stats-card-premium bg-gradient-indigo animate-up">
+            <div class="stat-label">Total Students</div>
+            <div class="stat-value">{{ total_students }}</div>
+            <div class="mt-2 opacity-75"><i class="fas fa-arrow-up-right me-1"></i> Active Database</div>
+            <i class="fas fa-user-graduate"></i>
+        </div>
+    </div>
+    <div class="col-xl col-md-4">
+        <div class="stats-card-premium bg-gradient-emerald animate-up">
+            <div class="stat-label">Present Today</div>
+            <div class="stat-value">{{ present_today }}</div>
+            <div class="mt-2 opacity-75 fw-bold">{{ present_percentage }}% Attendance rate</div>
+            <i class="fas fa-check-double"></i>
+        </div>
+    </div>
+    <div class="col-xl col-md-4">
+        <div class="stats-card-premium bg-gradient-amber animate-up">
+            <div class="stat-label">Late Today</div>
+            <div class="stat-value">{{ late_today }}</div>
+            <div class="mt-2 opacity-75 fw-bold">Delayed arrivals</div>
+            <i class="fas fa-clock"></i>
+        </div>
+    </div>
+    <div class="col-xl col-md-6">
+        <div class="stats-card-premium bg-gradient-rose animate-up">
+            <div class="stat-label">Absent Today</div>
+            <div class="stat-value">{{ absent_today }}</div>
+            <div class="mt-2 opacity-75 fw-bold">{{ absent_percentage }}% Absence rate</div>
+            <i class="fas fa-user-xmark"></i>
+        </div>
+    </div>
+    <div class="col-xl col-md-6">
+        <div class="stats-card-premium bg-gradient-sky animate-up">
+            <div class="stat-label">7-Day Average</div>
+            <div class="stat-value">{{ avg_attendance }}%</div>
+            <div class="mt-2 opacity-75"><i class="fas fa-chart-line me-1"></i> Performance Metric</div>
+            <i class="fas fa-wave-pulse"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-5">
+    <div class="col-lg-8">
+        <div class="card glass-card h-100 border-0 shadow-sm animate-up">
+            <div
+                class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-800 text-primary m-0"><i class="fas fa-chart-column me-2"></i>Attendance Trends</h5>
+                <div class="trends-toggle-group">
+                    <button id="btnWeekly" class="trends-toggle-btn active" type="button">Weekly</button>
+                    <button id="btnMonthly" class="trends-toggle-btn" type="button">Monthly</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="attendanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="glass-card p-4 h-100 animate-up">
+            <h5 class="fw-800 text-primary mb-4"><i class="fas fa-chart-pie me-2"></i>Current Distribution</h5>
+            <div class="chart-container d-flex align-items-center">
+                <canvas id="distributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-800 text-primary m-0"><i class="fas fa-clock-rotate-left me-2"></i>Recent Activity</h5>
+                <a href="/attendance" class="btn btn-sm btn-premium">View All History</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-premium table-hover">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Time Captured</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in recent_activity %}
+                        <tr>
+                            <td class="fw-bold">{{ record.student_id }}</td>
+                            <td>{{ record.name }}</td>
+                            <td>
+                                {% if record.status == 'present' %}
+                                <span
+                                    class="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-3 animate-pop">
+                                    <i class="fas fa-circle-check me-1"></i> PRESENT
+                                </span>
+                                {% elif record.status == 'late' %}
+                                <span
+                                    class="badge bg-warning-subtle text-warning border border-warning px-3 py-2 rounded-3 animate-pop">
+                                    <i class="fas fa-clock fs-6 me-1"></i> LATE
+                                </span>
+                                {% else %}
+                                <span
+                                    class="badge bg-danger-subtle text-danger border border-danger px-3 py-2 rounded-3 animate-pop">
+                                    <i class="fas fa-circle-xmark me-1"></i> ABSENT
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-secondary small fw-medium">{{ record.time }} ({{ record.date }})</td>
+                            <td>
+                                <button class="btn btn-sm p-0 text-primary me-2" title="Details"><i
+                                        class="fas fa-circle-info"></i></button>
+                                <button class="btn btn-sm p-0 text-secondary" title="Export"><i
+                                        class="fas fa-file-pdf"></i></button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not recent_activity %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-secondary">
+                                <i class="fas fa-inbox d-block mb-2 fs-2 opacity-25"></i>
+                                No activity recorded for today.
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+<!-- Holiday Modal -->
+<div class="modal fade" id="holidayModal" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen-lg-down modal-xl modal-dialog-centered">
+        <div class="modal-content holiday-modal-content" style="background: white;">
+            <div class="modal-header border-0 px-4 pt-4">
+                <div>
+                    <h3 class="fw-800 text-primary mb-0">🇮🇳 2026 Interactive Calendar</h3>
+                    <p class="text-secondary small mb-0">View holidays, navigate months, and check attendance days</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4 pb-4">
+                <div id="calendar"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    let calendar;
+    document.addEventListener('DOMContentLoaded', function () {
+        // Shared Chart Config
+        Chart.defaults.font.family = "'Outfit', sans-serif";
+        Chart.defaults.color = '#64748b';
+
+        // Data from Backend
+        const weeklyData = {{ weekly_data | tojson | safe }};
+        const monthlyData = {{ monthly_data | tojson | safe }};
+
+        // Attendance Trends Chart
+        const trendsCtx = document.getElementById('attendanceChart').getContext('2d');
+        const createGradient = (ctx) => {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+            gradient.addColorStop(1, 'rgba(99, 102, 241, 0)');
+            return gradient;
+        };
+
+        const attendanceChart = new Chart(trendsCtx, {
+            type: 'line',
+            data: {
+                labels: weeklyData.labels,
+                datasets: [{
+                    label: 'Students Present',
+                    data: weeklyData.counts,
+                    borderColor: '#6366f1',
+                    borderWidth: 4,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#6366f1',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    fill: true,
+                    backgroundColor: createGradient(trendsCtx),
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { backgroundColor: '#1e293b', padding: 12, cornerRadius: 10 }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [5, 5], color: 'rgba(0,0,0,0.05)' }, ticks: { stepSize: 1 } },
+                    x: { grid: { display: false }, ticks: { font: { weight: '600' } } }
+                }
+            }
+        });
+
+        // Toggle logic
+        const weeklyBtn = document.getElementById('btnWeekly');
+        const monthlyBtn = document.getElementById('btnMonthly');
+        if (weeklyBtn) weeklyBtn.addEventListener('click', () => updateChart(weeklyData, weeklyBtn, monthlyBtn));
+        if (monthlyBtn) monthlyBtn.addEventListener('click', () => updateChart(monthlyData, monthlyBtn, weeklyBtn));
+        function updateChart(data, btnToActivate, btnToDeactivate) {
+            attendanceChart.data.labels = data.labels;
+            attendanceChart.data.datasets[0].data = data.counts;
+            attendanceChart.update();
+            btnToActivate.classList.add('active');
+            btnToDeactivate.classList.remove('active');
+        }
+
+        // Distribution Pie Chart
+        const distCtx = document.getElementById('distributionChart').getContext('2d');
+        new Chart(distCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['On-Time', 'Late', 'Absent'],
+                datasets: [{
+                    data: [
+                        {{ (present_today - late_today) if (present_today - late_today) > 0 else 0 }},
+                        {{ late_today }},
+                        {{ absent_today }}
+                    ],
+                    backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+                    borderWidth: 0, hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '75%',
+                plugins: { legend: { position: 'bottom', labels: { padding: 30, usePointStyle: true, font: { weight: '600' } } } }
+            }
+        });
+    });
+
+    // FullCalendar Initialization on Modal Show
+    const holidayModal = document.getElementById('holidayModal');
+    holidayModal.addEventListener('shown.bs.modal', function () {
+        if (!calendar) {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                initialDate: '2026-03-01',
+                height: 'auto',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,dayGridWeek,listMonth'
+                },
+                events: [
+                    { title: "🇮🇳 Republic Day", start: "2026-01-26", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "🎨 Holi", start: "2026-03-04", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "🌙 Id-ul-Fitr", start: "2026-03-21", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "🏹 Ram Navami", start: "2026-03-26", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "☸️ Mahavir Jayanti", start: "2026-03-31", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "✝️ Good Friday", start: "2026-04-03", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "🌸 Buddha Purnima", start: "2026-05-01", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "🐏 Id-ul-Zuha", start: "2026-05-27", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "🏴 Muharram", start: "2026-06-26", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "🐅 Independence Day", start: "2026-08-15", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "🕯️ Milad-un-Nabi", start: "2026-08-26", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "👓 Gandhi Jayanti", start: "2026-10-02", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "🔥 Dussehra", start: "2026-10-20", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "🪔 Diwali", start: "2026-11-08", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "👳 Guru Nanak Jayanti", start: "2026-11-24", backgroundColor: "#ef4444", borderColor: "#ef4444" },
+                    { title: "🎄 Christmas Day", start: "2026-12-25", backgroundColor: "#ef4444", borderColor: "#ef4444" }
+                ],
+                eventClick: function(info) {
+                    alert('Holiday: ' + info.event.title);
+                }
+            });
+            calendar.render();
+        } else {
+            calendar.updateSize();
+        }
+    });
+</script>
+{% endblock %}

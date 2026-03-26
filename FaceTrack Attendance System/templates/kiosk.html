@@ -1,0 +1,384 @@
+{% extends 'layout.html' %}
+{% block content %}
+<style>
+    .kiosk-header {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        border-radius: 1.5rem;
+        padding: 2rem 2.5rem;
+        color: white;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .kiosk-header::before {
+        content: '';
+        position: absolute;
+        top: -50%; right: -10%;
+        width: 300px; height: 300px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+    }
+    .student-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1rem;
+        max-height: 65vh;
+        overflow-y: auto;
+        padding-right: 0.5rem;
+    }
+    .student-card {
+        background: var(--card-bg);
+        border: 2px solid transparent;
+        border-radius: 1.25rem;
+        padding: 1.5rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        user-select: none;
+    }
+    .student-card:hover, .student-card:active {
+        border-color: var(--primary);
+        transform: scale(1.06);
+        box-shadow: 0 8px 25px rgba(99,102,241,0.25);
+        background: rgba(99,102,241,0.08);
+    }
+    .student-card .avatar {
+        width: 56px; height: 56px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        border-radius: 1rem;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.4rem; font-weight: 800;
+        margin: 0 auto 0.75rem;
+    }
+    .student-card .sid {
+        font-size: 0.7rem;
+        color: var(--secondary);
+        font-weight: 600;
+        letter-spacing: 0.05em;
+    }
+    .student-card .sname {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #1e293b;
+        margin-top: 0.1rem;
+        line-height: 1.2;
+    }
+    [data-bs-theme="dark"] .student-card .sname { color: #e2e8f0; }
+
+    /* Camera Modal */
+    .camera-modal-content {
+        background: #0f172a;
+        border-radius: 1.5rem;
+        overflow: hidden;
+        color: white;
+        border: 1px solid rgba(99,102,241,0.3);
+    }
+    #kioskVideo {
+        width: 100%; border-radius: 1rem;
+        background: #000;
+        max-height: 60vh;
+        object-fit: cover;
+    }
+    #capturedPreview {
+        width: 100%; border-radius: 1rem;
+        display: none;
+        max-height: 60vh;
+        object-fit: cover;
+    }
+    #kioskCanvas { display: none; }
+
+    .scan-ring {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200px; height: 200px;
+        border: 3px solid rgba(99,102,241,0.7);
+        border-radius: 50%;
+        pointer-events: none;
+        animation: scanPulse 2s infinite;
+    }
+    @keyframes scanPulse {
+        0%   { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }
+        70%  { box-shadow: 0 0 0 20px rgba(99,102,241,0); }
+        100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); }
+    }
+    .video-wrapper { position: relative; }
+
+    /* Status chips */
+    .chip-success { background: #10b981; color: white; }
+    .chip-warning { background: #f59e0b; color: white; }
+    .chip-danger  { background: #ef4444; color: white; }
+
+    .search-box input {
+        border-radius: 1rem;
+        border: 2px solid rgba(99,102,241,0.2);
+        padding: 0.8rem 1.2rem;
+        font-weight: 600;
+        width: 100%;
+    }
+    .search-box input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+        outline: none;
+    }
+    .already-marked { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+    .already-marked .avatar { background: #10b981; }
+</style>
+
+<!-- Header -->
+<div class="kiosk-header animate-up">
+    <div class="d-flex align-items-center justify-content-center gap-3">
+        <i class="fas fa-camera-viewfinder" style="font-size: 2rem;"></i>
+        <div>
+            <h2 class="fw-800 mb-0">🎓 Student Kiosk</h2>
+            <p class="mb-0 opacity-75 small">Touch your name → Look at camera → Done!</p>
+        </div>
+    </div>
+</div>
+
+<!-- Search + Grid -->
+<div class="row">
+    <div class="col-12 mb-3 animate-up search-box">
+        <input type="text" id="searchStudent" placeholder="🔍  Search your name..." autocomplete="off">
+    </div>
+    <div class="col-12 animate-up">
+        <div class="student-grid" id="studentGrid">
+            {% for sid, sname in students.items() %}
+            <div class="student-card {% if sname in present_names %}already-marked{% endif %}"
+                 data-name="{{ sname }}" data-sid="{{ sid }}"
+                 onclick="openCamera('{{ sid }}', '{{ sname }}')">
+                <div class="avatar">{{ sname[0] }}</div>
+                <div class="sid">ID: {{ sid }}</div>
+                <div class="sname">{{ sname }}</div>
+                {% if sname in present_names %}
+                <span class="badge bg-success mt-1" style="font-size:0.65rem;">✓ Marked</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Camera Modal -->
+<div class="modal fade" id="cameraModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content camera-modal-content">
+            <div class="modal-header border-0 pb-0 px-4 pt-4">
+                <div>
+                    <h5 class="fw-800 mb-0" id="modalStudentName" style="color:white;"></h5>
+                    <small style="color:rgba(255,255,255,0.6);" id="modalStudentId"></small>
+                </div>
+                <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:white;" onclick="closeCamera()">
+                    <i class="fas fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body px-4 pb-4">
+                <!-- Video -->
+                <div class="video-wrapper mb-3">
+                    <video id="kioskVideo" autoplay playsinline></video>
+                    <img id="capturedPreview" src="" alt="Captured">
+                    <canvas id="kioskCanvas"></canvas>
+                    <div class="scan-ring" id="scanRing"></div>
+                </div>
+
+                <!-- Status -->
+                <div class="text-center mb-3">
+                    <span id="cameraStatus" class="badge px-4 py-2 rounded-pill fw-700" style="background:rgba(255,255,255,0.15);font-size:0.9rem;">
+                        <i class="fas fa-circle-dot me-2"></i>Ready to Capture
+                    </span>
+                </div>
+
+                <!-- Buttons -->
+                <div class="d-flex gap-3 justify-content-center" id="captureButtons">
+                    <button class="btn btn-premium px-5 py-3 fs-5" id="captureBtn" onclick="captureAndMark()">
+                        <i class="fas fa-camera me-2"></i> Capture & Mark Attendance
+                    </button>
+                </div>
+                <div class="d-none gap-3 justify-content-center mt-3" id="retakeButtons">
+                    <button class="btn px-4 py-2" style="background:rgba(255,255,255,0.15);color:white;" onclick="retake()">
+                        <i class="fas fa-rotate-left me-2"></i>Retake
+                    </button>
+                    <button class="btn px-4 py-2" style="background:#10b981;color:white;" id="confirmBtn" onclick="confirmMark()">
+                        <i class="fas fa-circle-check me-2"></i>Confirm
+                    </button>
+                </div>
+
+                <!-- Result -->
+                <div id="resultBox" class="d-none mt-3 p-3 rounded-3 text-center fw-700" style="font-size:1.1rem;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<canvas id="kioskCanvas" style="display:none;"></canvas>
+
+<script>
+let currentStream = null;
+let currentStudent = { sid: null, name: null };
+let capturedDataUrl = null;
+let cameraModal = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    cameraModal = new bootstrap.Modal(document.getElementById('cameraModal'));
+
+    // Search filter
+    document.getElementById('searchStudent').addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        document.querySelectorAll('.student-card').forEach(card => {
+            const name = card.dataset.name.toLowerCase();
+            const sid = card.dataset.sid.toLowerCase();
+            card.style.display = (name.includes(q) || sid.includes(q)) ? '' : 'none';
+        });
+    });
+});
+
+function openCamera(sid, sname) {
+    currentStudent = { sid, name: sname };
+    document.getElementById('modalStudentName').textContent = '👤 ' + sname;
+    document.getElementById('modalStudentId').textContent = 'Student ID: ' + sid;
+    resetModal();
+    cameraModal.show();
+
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+        .then(stream => {
+            currentStream = stream;
+            const video = document.getElementById('kioskVideo');
+            video.srcObject = stream;
+            video.style.display = 'block';
+            document.getElementById('capturedPreview').style.display = 'none';
+        })
+        .catch(err => {
+            setStatus('❌ Camera access denied', 'chip-danger');
+            document.getElementById('captureBtn').disabled = true;
+        });
+}
+
+function resetModal() {
+    document.getElementById('kioskVideo').style.display = 'block';
+    document.getElementById('capturedPreview').style.display = 'none';
+    document.getElementById('captureButtons').classList.remove('d-none');
+    document.getElementById('captureButtons').classList.add('d-flex');
+    document.getElementById('retakeButtons').classList.add('d-none');
+    document.getElementById('retakeButtons').classList.remove('d-flex');
+    document.getElementById('resultBox').classList.add('d-none');
+    document.getElementById('captureBtn').disabled = false;
+    document.getElementById('scanRing').style.display = 'block';
+    capturedDataUrl = null;
+    setStatus('📷 Ready to Capture', null);
+}
+
+function closeCamera() {
+    stopStream();
+    cameraModal.hide();
+    resetModal();
+}
+
+function stopStream() {
+    if (currentStream) {
+        currentStream.getTracks().forEach(t => t.stop());
+        currentStream = null;
+    }
+}
+
+function setStatus(msg, cls) {
+    const el = document.getElementById('cameraStatus');
+    el.textContent = msg;
+    el.className = 'badge px-4 py-2 rounded-pill fw-700 ' + (cls || '');
+    if (!cls) el.style.background = 'rgba(255,255,255,0.15)';
+    else el.style.background = '';
+}
+
+function captureAndMark() {
+    const video = document.getElementById('kioskVideo');
+    const canvas = document.getElementById('kioskCanvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    capturedDataUrl = canvas.toDataURL('image/jpeg');
+
+    // Show preview
+    const preview = document.getElementById('capturedPreview');
+    preview.src = capturedDataUrl;
+    preview.style.display = 'block';
+    video.style.display = 'none';
+    document.getElementById('scanRing').style.display = 'none';
+
+    // Switch button groups
+    document.getElementById('captureButtons').classList.add('d-none');
+    document.getElementById('captureButtons').classList.remove('d-flex');
+    document.getElementById('retakeButtons').classList.remove('d-none');
+    document.getElementById('retakeButtons').classList.add('d-flex');
+    setStatus('👀 Does this look good?', null);
+}
+
+function retake() {
+    const video = document.getElementById('kioskVideo');
+    video.style.display = 'block';
+    document.getElementById('capturedPreview').style.display = 'none';
+    document.getElementById('scanRing').style.display = 'block';
+    document.getElementById('captureButtons').classList.remove('d-none');
+    document.getElementById('captureButtons').classList.add('d-flex');
+    document.getElementById('retakeButtons').classList.add('d-none');
+    document.getElementById('retakeButtons').classList.remove('d-flex');
+    capturedDataUrl = null;
+    setStatus('📷 Ready to Capture', null);
+}
+
+function confirmMark() {
+    if (!capturedDataUrl) return;
+
+    document.getElementById('confirmBtn').disabled = true;
+    setStatus('⏳ Marking attendance...', null);
+
+    fetch('/mark_attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: currentStudent.name })
+    })
+    .then(r => r.json())
+    .then(data => {
+        const box = document.getElementById('resultBox');
+        box.classList.remove('d-none');
+        if (data.success) {
+            box.style.background = 'rgba(16,185,129,0.2)';
+            box.style.color = '#34d399';
+            box.style.border = '1.5px solid rgba(16,185,129,0.4)';
+            box.innerHTML = `✅ Attendance marked for <strong>${currentStudent.name}</strong>!<br><small>${data.time}</small>`;
+            setStatus('✅ Attendance Marked!', 'chip-success');
+            // Update card on grid
+            updateCard(currentStudent.name, currentStudent.sid, data.status || 'Present');
+            setTimeout(closeCamera, 2500);
+        } else {
+            box.style.background = 'rgba(239,68,68,0.2)';
+            box.style.color = '#f87171';
+            box.style.border = '1.5px solid rgba(239,68,68,0.4)';
+            box.innerHTML = `⚠️ ${data.message}`;
+            setStatus('⚠️ ' + data.message, 'chip-warning');
+            document.getElementById('confirmBtn').disabled = false;
+        }
+    })
+    .catch(() => {
+        setStatus('❌ Server error. Try again.', 'chip-danger');
+        document.getElementById('confirmBtn').disabled = false;
+    });
+}
+
+function updateCard(name, sid, status) {
+    document.querySelectorAll('.student-card').forEach(card => {
+        if (card.dataset.sid === String(sid)) {
+            card.classList.add('already-marked');
+            card.querySelector('.avatar').style.background = '#10b981';
+            if (!card.querySelector('.badge')) {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-success mt-1';
+                badge.style.fontSize = '0.65rem';
+                badge.textContent = '✓ Marked';
+                card.appendChild(badge);
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

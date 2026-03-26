@@ -1,0 +1,246 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+    .search-console {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 1.5rem;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        box-shadow: 0 10px 30px rgba(99, 102, 241, 0.05);
+    }
+
+    .dark-mode .search-console {
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .search-input-group {
+        flex-grow: 1;
+        position: relative;
+    }
+
+    .search-input-group i {
+        position: absolute;
+        left: 1.2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--primary);
+        opacity: 0.6;
+    }
+
+    .search-control {
+        width: 100%;
+        padding: 0.8rem 1rem 0.8rem 3rem;
+        border-radius: 1rem;
+        border: 1px solid var(--glass-border);
+        background: rgba(255, 255, 255, 0.5);
+        transition: all 0.3s;
+    }
+
+    .dark-mode .search-control {
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+    }
+
+    .search-control:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        outline: none;
+    }
+
+    .mgmt-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .student-avatar {
+        width: 40px;
+        height: 40px;
+        background: var(--primary-light);
+        color: var(--primary);
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 1.1rem;
+    }
+
+    .btn-action {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.5rem;
+        transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+        transform: scale(1.1);
+    }
+
+    .modal-content-premium {
+        border-radius: 2rem;
+        border: none;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+    }
+
+    .dark-mode .modal-content-premium {
+        background: rgba(30, 41, 59, 0.95);
+    }
+
+    .modal-header-premium {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 2rem;
+        border: none;
+    }
+</style>
+
+<div class="mgmt-header animate-up">
+    <div>
+        <h2 class="fw-800 text-primary m-0">Student Management</h2>
+        <p class="text-secondary m-0">View, search, and manage student information.</p>
+    </div>
+    <button class="btn btn-premium" data-bs-toggle="collapse" data-bs-target="#addForm">
+        <i class="fas fa-plus-circle me-2"></i> Add Student
+    </button>
+</div>
+
+<div class="collapse mb-4" id="addForm">
+    <div class="glass-card p-4 animate-up">
+        <h5 class="fw-800 text-primary mb-4">Register New Student</h5>
+        <form method="POST" action="/add_student" class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label fw-bold small text-uppercase opacity-75">Student ID</label>
+                <input type="text" class="form-control rounded-3" name="student_id" required placeholder="Ex: STU001">
+            </div>
+            <div class="col-md-5">
+                <label class="form-label fw-bold small text-uppercase opacity-75">Full Name</label>
+                <input type="text" class="form-control rounded-3" name="name" required placeholder="John Doe">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-premium w-100">Save Data</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="search-console animate-up">
+    <div class="search-input-group">
+        <i class="fas fa-search"></i>
+        <input type="text" class="search-control" id="search" placeholder="Search by name or ID..."
+            onkeyup="if(event.key==='Enter') searchStudents()">
+    </div>
+    <button class="btn btn-outline-premium px-4" onclick="searchStudents()">Search</button>
+    <button class="btn btn-outline-secondary px-4" onclick="window.location.href='/students'">Reset</button>
+</div>
+
+<div class="glass-card p-0 overflow-hidden animate-up">
+    <div class="table-responsive">
+        <table class="table table-premium table-hover m-0">
+            <thead>
+                <tr>
+                    <th class="ps-4">Identifier</th>
+                    <th>Reference ID</th>
+                    <th>Full Name</th>
+                    <th class="text-end pe-4">Management Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="student-avatar">{{ student.name[0]|upper }}</div>
+                    </td>
+                    <td class="fw-bold text-primary">{{ student.id }}</td>
+                    <td class="fw-medium">{{ student.name }}</td>
+                    <td class="text-end pe-4">
+                        <button class="btn-action bg-info-subtle text-info border-0 me-2"
+                            onclick="editStudent('{{ student.id }}', '{{ student.name }}')" title="Edit Profile">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-action bg-danger-subtle text-danger border-0"
+                            onclick="deleteStudent('{{ student.id }}')" title="Remove Student">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not students %}
+                <tr>
+                    <td colspan="4" class="text-center py-5 text-secondary">
+                        <i class="fas fa-user-slash fs-1 opacity-25 d-block mb-3"></i>
+                        No students found in the database.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Edit Modal Redesigned -->
+<div class="modal fade" id="editStudentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-premium shadow-lg">
+            <div class="modal-header modal-header-premium">
+                <h5 class="modal-title fw-800"><i class="fas fa-user-edit me-2"></i>Edit Student Profile</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/edit_student">
+                <div class="modal-body p-4">
+                    <input type="hidden" id="edit_student_id" name="student_id">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-uppercase opacity-75">Identification Number
+                            (Locked)</label>
+                        <input type="text" class="form-control rounded-3 opacity-50" id="display_id" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-uppercase opacity-75">Full Name</label>
+                        <input type="text" class="form-control rounded-3" id="edit_name" name="name" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-4 pt-0">
+                    <button type="button" class="btn btn-outline-secondary rounded-3 px-4"
+                        data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-premium rounded-3 px-4">Update Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function searchStudents() {
+        const searchTerm = document.getElementById('search').value;
+        window.location.href = '/students?search=' + encodeURIComponent(searchTerm);
+    }
+
+    function editStudent(id, name) {
+        document.getElementById('edit_student_id').value = id;
+        document.getElementById('display_id').value = id;
+        document.getElementById('edit_name').value = name;
+        const modal = new bootstrap.Modal(document.getElementById('editStudentModal'));
+        modal.show();
+    }
+
+    function deleteStudent(id) {
+        if (confirm('CAUTION: Are you sure you want to permanently remove this student record? This action cannot be undone.')) {
+            window.location.href = '/delete_student/' + id;
+        }
+    }
+</script>
+{% endblock %}
