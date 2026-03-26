@@ -1,3 +1,7 @@
+## 🚀 Live Demo  
+[Click here to open app](https://python-projects-bjpe.onrender.com)
+
+
 # Smart Cafeteria Dashboard
 
 A professional Streamlit-based dashboard for managing a smart cafeteria. Features include employee management, attendance tracking, menu management, order processing, and salary calculations.
