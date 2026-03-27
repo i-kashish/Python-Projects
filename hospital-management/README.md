@@ -1,7 +1,8 @@
 # 🏥 Digital Hospital Management System (Streamlit v3.0)
 
 A professional, high-performance, and aesthetically pleasing Hospital Management System built with **Python**, **Streamlit**, and **SQLite**. This application represents a full modernization of the original Tkinter-based system, featuring a responsive web interface, real-time analytics, and advanced reporting.
-
+🚀 **Live App:**  
+👉 [Click here to open]( https://hospital-management-o05p.onrender.com)
 ---
 
 ## ✨ Key Features
