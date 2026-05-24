@@ -1,5 +1,8 @@
 # 🎬 CineMatch — Movie Recommendation System
 
+## 🌐 Live Demo
+[Live App](https://python-projects-6b52.onrender.com)
+
 A full-stack Python web app that recommends movies using **Content-Based Filtering**, **Collaborative Filtering**, and a **Hybrid approach** — built with Flask and scikit-learn.
 
 ![Python](https://img.shields.io/badge/Python-3.11-blue)
