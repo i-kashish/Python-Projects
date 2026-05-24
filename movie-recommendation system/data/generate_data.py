@@ -1,0 +1,71 @@
+"""
+Script to generate sample movie dataset for the recommendation system.
+In production, replace this with TMDB API data or a real dataset like MovieLens.
+"""
+import json
+
+MOVIES = [
+    {"id": 1, "title": "The Shawshank Redemption", "genres": ["Drama"], "year": 1994, "rating": 9.3, "overview": "Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.", "poster": "https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", "director": "Frank Darabont", "cast": ["Tim Robbins", "Morgan Freeman"]},
+    {"id": 2, "title": "The Godfather", "genres": ["Crime", "Drama"], "year": 1972, "rating": 9.2, "overview": "An organized crime dynasty's aging patriarch transfers control to his reluctant son.", "poster": "https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsLegHnDmnidf.jpg", "director": "Francis Ford Coppola", "cast": ["Marlon Brando", "Al Pacino"]},
+    {"id": 3, "title": "The Dark Knight", "genres": ["Action", "Crime", "Drama"], "year": 2008, "rating": 9.0, "overview": "When the menace known as the Joker wreaks havoc on Gotham, Batman must accept one of the greatest psychological and physical tests.", "poster": "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg", "director": "Christopher Nolan", "cast": ["Christian Bale", "Heath Ledger"]},
+    {"id": 4, "title": "Pulp Fiction", "genres": ["Crime", "Drama"], "year": 1994, "rating": 8.9, "overview": "The lives of two mob hitmen, a boxer, a gangster and his wife intertwine in four tales of violence and redemption.", "poster": "https://image.tmdb.org/t/p/w500/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg", "director": "Quentin Tarantino", "cast": ["John Travolta", "Uma Thurman", "Samuel L. Jackson"]},
+    {"id": 5, "title": "Schindler's List", "genres": ["Biography", "Drama", "History"], "year": 1993, "rating": 9.0, "overview": "In German-occupied Poland during World War II, industrialist Oskar Schindler gradually becomes concerned for his Jewish workforce.", "poster": "https://image.tmdb.org/t/p/w500/sF1U4EUQS8YHUYjNl3pMGNIQyr0.jpg", "director": "Steven Spielberg", "cast": ["Liam Neeson", "Ralph Fiennes"]},
+    {"id": 6, "title": "Inception", "genres": ["Action", "Adventure", "Sci-Fi"], "year": 2010, "rating": 8.8, "overview": "A thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea.", "poster": "https://image.tmdb.org/t/p/w500/oYuLEt3zVCKq57qu2F8dT7NIa6f.jpg", "director": "Christopher Nolan", "cast": ["Leonardo DiCaprio", "Joseph Gordon-Levitt"]},
+    {"id": 7, "title": "The Matrix", "genres": ["Action", "Sci-Fi"], "year": 1999, "rating": 8.7, "overview": "A computer hacker learns about the true nature of his reality and his role in the war against its controllers.", "poster": "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg", "director": "Wachowskis", "cast": ["Keanu Reeves", "Laurence Fishburne"]},
+    {"id": 8, "title": "Goodfellas", "genres": ["Biography", "Crime", "Drama"], "year": 1990, "rating": 8.7, "overview": "The story of Henry Hill and his life in the mob, covering his relationship with his wife Karen Hill.", "poster": "https://image.tmdb.org/t/p/w500/aKuFiU82s5ISJpGZp7YkIr3kCUd.jpg", "director": "Martin Scorsese", "cast": ["Ray Liotta", "Robert De Niro", "Joe Pesci"]},
+    {"id": 9, "title": "Interstellar", "genres": ["Adventure", "Drama", "Sci-Fi"], "year": 2014, "rating": 8.6, "overview": "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.", "poster": "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg", "director": "Christopher Nolan", "cast": ["Matthew McConaughey", "Anne Hathaway"]},
+    {"id": 10, "title": "Fight Club", "genres": ["Drama"], "year": 1999, "rating": 8.8, "overview": "An insomniac office worker and a devil-may-care soapmaker form an underground fight club.", "poster": "https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg", "director": "David Fincher", "cast": ["Brad Pitt", "Edward Norton"]},
+    {"id": 11, "title": "Forrest Gump", "genres": ["Drama", "Romance"], "year": 1994, "rating": 8.8, "overview": "The presidencies of Kennedy and Johnson, Vietnam, Watergate, and other history unfold through the perspective of an Alabama man.", "poster": "https://image.tmdb.org/t/p/w500/arw2vcBveWOVZr6pxd9XTd1TdQa.jpg", "director": "Robert Zemeckis", "cast": ["Tom Hanks", "Robin Wright"]},
+    {"id": 12, "title": "The Lord of the Rings: The Fellowship of the Ring", "genres": ["Adventure", "Drama", "Fantasy"], "year": 2001, "rating": 8.8, "overview": "A meek Hobbit from the Shire and eight companions set out on a journey to destroy the powerful One Ring.", "poster": "https://image.tmdb.org/t/p/w500/6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg", "director": "Peter Jackson", "cast": ["Elijah Wood", "Ian McKellen"]},
+    {"id": 13, "title": "Star Wars: A New Hope", "genres": ["Action", "Adventure", "Fantasy", "Sci-Fi"], "year": 1977, "rating": 8.6, "overview": "Luke Skywalker joins forces with a Jedi Knight, a cocky pilot, a Wookiee and two droids to save the galaxy.", "poster": "https://image.tmdb.org/t/p/w500/6FfCtAuVAW8XJjZ7eWeLibRLWTw.jpg", "director": "George Lucas", "cast": ["Mark Hamill", "Harrison Ford"]},
+    {"id": 14, "title": "Spirited Away", "genres": ["Animation", "Adventure", "Family", "Fantasy"], "year": 2001, "rating": 8.6, "overview": "A sullen 10-year-old girl wanders into a world ruled by gods, witches, and spirits.", "poster": "https://image.tmdb.org/t/p/w500/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg", "director": "Hayao Miyazaki", "cast": ["Daveigh Chase", "Suzanne Pleshette"]},
+    {"id": 15, "title": "The Silence of the Lambs", "genres": ["Crime", "Drama", "Thriller"], "year": 1991, "rating": 8.6, "overview": "A young FBI cadet must receive the help of an incarcerated and manipulative cannibal killer to catch another serial killer.", "poster": "https://image.tmdb.org/t/p/w500/uS9m8OBk1A8eM9I042bx8XXpqAq.jpg", "director": "Jonathan Demme", "cast": ["Jodie Foster", "Anthony Hopkins"]},
+    {"id": 16, "title": "Saving Private Ryan", "genres": ["Drama", "War"], "year": 1998, "rating": 8.6, "overview": "Following the Normandy Landings, a group of U.S. soldiers go behind enemy lines to retrieve a paratrooper.", "poster": "https://image.tmdb.org/t/p/w500/uqx37cS8cpHg8U35f9U5IBlrCV3.jpg", "director": "Steven Spielberg", "cast": ["Tom Hanks", "Matt Damon"]},
+    {"id": 17, "title": "The Green Mile", "genres": ["Crime", "Drama", "Fantasy", "Mystery"], "year": 1999, "rating": 8.6, "overview": "The lives of guards on Death Row are affected by one of their charges: a giant, g, black man accused of child murder.", "poster": "https://image.tmdb.org/t/p/w500/velWPhVN1Whf3hno9NAHKUksBQI.jpg", "director": "Frank Darabont", "cast": ["Tom Hanks", "Michael Clarke Duncan"]},
+    {"id": 18, "title": "Gladiator", "genres": ["Action", "Adventure", "Drama"], "year": 2000, "rating": 8.5, "overview": "A former Roman General sets out to exact vengeance against the corrupt emperor who murdered his family.", "poster": "https://image.tmdb.org/t/p/w500/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg", "director": "Ridley Scott", "cast": ["Russell Crowe", "Joaquin Phoenix"]},
+    {"id": 19, "title": "The Departed", "genres": ["Crime", "Drama", "Thriller"], "year": 2006, "rating": 8.5, "overview": "An undercover cop and a mole in the police attempt to identify each other while both work for an Irish gang in South Boston.", "poster": "https://image.tmdb.org/t/p/w500/nT97ifVT2J1yMQmeq20Qblg61T.jpg", "director": "Martin Scorsese", "cast": ["Leonardo DiCaprio", "Matt Damon", "Jack Nicholson"]},
+    {"id": 20, "title": "Whiplash", "genres": ["Drama", "Music"], "year": 2014, "rating": 8.5, "overview": "A promising young drummer enrolls at a cut-throat music conservatory where his dreams of greatness are mentored by an instructor.", "poster": "https://image.tmdb.org/t/p/w500/7fn624j5lj3xTme2SgiLCeuedmO.jpg", "director": "Damien Chazelle", "cast": ["Miles Teller", "J.K. Simmons"]},
+    {"id": 21, "title": "The Prestige", "genres": ["Drama", "Mystery", "Sci-Fi", "Thriller"], "year": 2006, "rating": 8.5, "overview": "After a tragic accident, two stage magicians engage in a battle to create the ultimate illusion while sacrificing everything.", "poster": "https://image.tmdb.org/t/p/w500/5MXyQfz8xUP3dIFPTubhTsbFY6N.jpg", "director": "Christopher Nolan", "cast": ["Christian Bale", "Hugh Jackman"]},
+    {"id": 22, "title": "Parasite", "genres": ["Comedy", "Drama", "Thriller"], "year": 2019, "rating": 8.5, "overview": "All unemployed, Ki-taek's family takes a peculiar interest in the wealthy and naïve Park family.", "poster": "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg", "director": "Bong Joon Ho", "cast": ["Song Kang-ho", "Lee Sun-kyun"]},
+    {"id": 23, "title": "Avengers: Endgame", "genres": ["Action", "Adventure", "Drama", "Sci-Fi"], "year": 2019, "rating": 8.4, "overview": "After the devastating events of Avengers: Infinity War, the universe is in ruins.", "poster": "https://image.tmdb.org/t/p/w500/or06FN3Dka5tukK1e9sl16pB3iy.jpg", "director": "Russo Brothers", "cast": ["Robert Downey Jr.", "Chris Evans"]},
+    {"id": 24, "title": "Joker", "genres": ["Crime", "Drama", "Thriller"], "year": 2019, "rating": 8.4, "overview": "A mentally troubled comedian embarks on a downward spiral of revolution and bloody crime.", "poster": "https://image.tmdb.org/t/p/w500/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg", "director": "Todd Phillips", "cast": ["Joaquin Phoenix", "Robert De Niro"]},
+    {"id": 25, "title": "La La Land", "genres": ["Comedy", "Drama", "Music", "Romance"], "year": 2016, "rating": 8.0, "overview": "While navigating their careers in Los Angeles, a pianist and an actress fall in love while attempting to reconcile their aspirations.", "poster": "https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg", "director": "Damien Chazelle", "cast": ["Ryan Gosling", "Emma Stone"]},
+    {"id": 26, "title": "Get Out", "genres": ["Horror", "Mystery", "Thriller"], "year": 2017, "rating": 7.7, "overview": "A young African-American visits his white girlfriend's parents for the weekend, where his simmering uneasiness about their family grows.", "poster": "https://image.tmdb.org/t/p/w500/tFXcEccSUMyeTopCkHtEJGOxRYQ.jpg", "director": "Jordan Peele", "cast": ["Daniel Kaluuya", "Allison Williams"]},
+    {"id": 27, "title": "Everything Everywhere All at Once", "genres": ["Action", "Adventure", "Comedy", "Sci-Fi"], "year": 2022, "rating": 7.8, "overview": "An aging Chinese immigrant is swept up in an insane adventure to save the world by exploring other universes.", "poster": "https://image.tmdb.org/t/p/w500/w3LxiVYdWWRvEVdn5RYq6jIqkb1.jpg", "director": "Daniels", "cast": ["Michelle Yeoh", "Ke Huy Quan"]},
+    {"id": 28, "title": "The Wolf of Wall Street", "genres": ["Biography", "Comedy", "Crime", "Drama"], "year": 2013, "rating": 8.2, "overview": "Based on the true story of Jordan Belfort, from his rise to a wealthy stock-broker living the high life to his fall.", "poster": "https://image.tmdb.org/t/p/w500/34m2tygAYBGqA9MXKhRDtzWd4lP.jpg", "director": "Martin Scorsese", "cast": ["Leonardo DiCaprio", "Jonah Hill"]},
+    {"id": 29, "title": "Dune", "genres": ["Action", "Adventure", "Drama", "Sci-Fi"], "year": 2021, "rating": 8.0, "overview": "A noble family becomes embroiled in a war for control over the galaxy's most valuable asset.", "poster": "https://image.tmdb.org/t/p/w500/d5NXSklpcvkDTeKzmabWPHOoAlr.jpg", "director": "Denis Villeneuve", "cast": ["Timothée Chalamet", "Zendaya"]},
+    {"id": 30, "title": "No Country for Old Men", "genres": ["Crime", "Drama", "Thriller"], "year": 2007, "rating": 8.2, "overview": "Violence and mayhem ensue after a hunter stumbles upon a drug deal gone wrong and more than two million dollars in cash.", "poster": "https://image.tmdb.org/t/p/w500/6d5XOczc2t4aKBtgWzZxfgCKIrV.jpg", "director": "Coen Brothers", "cast": ["Tommy Lee Jones", "Javier Bardem", "Josh Brolin"]},
+]
+
+SAMPLE_RATINGS = [
+    {"user_id": 1, "movie_id": 1, "rating": 5},
+    {"user_id": 1, "movie_id": 3, "rating": 5},
+    {"user_id": 1, "movie_id": 6, "rating": 4},
+    {"user_id": 1, "movie_id": 9, "rating": 5},
+    {"user_id": 1, "movie_id": 21, "rating": 4},
+    {"user_id": 2, "movie_id": 2, "rating": 5},
+    {"user_id": 2, "movie_id": 4, "rating": 5},
+    {"user_id": 2, "movie_id": 8, "rating": 4},
+    {"user_id": 2, "movie_id": 19, "rating": 5},
+    {"user_id": 2, "movie_id": 30, "rating": 4},
+    {"user_id": 3, "movie_id": 12, "rating": 5},
+    {"user_id": 3, "movie_id": 13, "rating": 5},
+    {"user_id": 3, "movie_id": 18, "rating": 4},
+    {"user_id": 3, "movie_id": 23, "rating": 4},
+    {"user_id": 3, "movie_id": 29, "rating": 5},
+    {"user_id": 4, "movie_id": 14, "rating": 5},
+    {"user_id": 4, "movie_id": 22, "rating": 5},
+    {"user_id": 4, "movie_id": 25, "rating": 4},
+    {"user_id": 4, "movie_id": 27, "rating": 5},
+    {"user_id": 5, "movie_id": 15, "rating": 5},
+    {"user_id": 5, "movie_id": 24, "rating": 4},
+    {"user_id": 5, "movie_id": 26, "rating": 5},
+    {"user_id": 5, "movie_id": 10, "rating": 4},
+]
+
+if __name__ == "__main__":
+    with open("movies.json", "w") as f:
+        json.dump(MOVIES, f, indent=2)
+    with open("ratings.json", "w") as f:
+        json.dump(SAMPLE_RATINGS, f, indent=2)
+    print(f"Generated {len(MOVIES)} movies and {len(SAMPLE_RATINGS)} ratings.")

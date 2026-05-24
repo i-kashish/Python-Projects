@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ movie.title }} — CineMatch</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+  <nav class="navbar navbar-detail">
+    <a class="logo" href="/">🎬 CineMatch</a>
+    <div class="search-bar">
+      <input id="searchInput" type="text" placeholder="Search movies…" autocomplete="off" />
+      <button id="searchBtn">Search</button>
+    </div>
+  </nav>
+
+  <!-- Movie Hero -->
+  <div class="movie-hero">
+    <div class="movie-hero-bg" style="background-image: url('{{ movie.poster }}')"></div>
+    <div class="movie-hero-content container">
+      <div class="movie-poster-large">
+        <img src="{{ movie.poster }}" alt="{{ movie.title }}" onerror="this.src='/static/images/placeholder.svg'" />
+      </div>
+      <div class="movie-meta">
+        <div class="movie-badges">
+          {% for genre in movie.genres %}
+          <span class="tag">{{ genre }}</span>
+          {% endfor %}
+        </div>
+        <h1>{{ movie.title }}</h1>
+        <div class="movie-stats">
+          <span>⭐ {{ movie.rating }}/10</span>
+          <span>📅 {{ movie.year }}</span>
+          <span>🎬 {{ movie.director }}</span>
+        </div>
+        <p class="movie-overview">{{ movie.overview }}</p>
+        <div class="cast-list">
+          <strong>Cast:</strong>
+          {% for actor in movie.cast %}
+          <span class="cast-chip">{{ actor }}</span>
+          {% endfor %}
+        </div>
+
+        <!-- Algorithm Switcher -->
+        <div class="algo-switcher">
+          <span class="algo-label">Recommendation method:</span>
+          <div class="algo-btns">
+            <a href="/movie/{{ movie.id }}?method=hybrid" class="algo-btn {% if request.args.get('method','hybrid') == 'hybrid' %}active{% endif %}">🔀 Hybrid</a>
+            <a href="/movie/{{ movie.id }}?method=content" class="algo-btn {% if request.args.get('method') == 'content' %}active{% endif %}">🎯 Content</a>
+            <a href="/movie/{{ movie.id }}?method=collaborative" class="algo-btn {% if request.args.get('method') == 'collaborative' %}active{% endif %}">👥 Collaborative</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommendations -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">Because you like <em>{{ movie.title }}</em></h2>
+      {% if recommendations %}
+      <div class="movie-grid">
+        {% for rec in recommendations %}
+        <div class="movie-card" onclick="window.location='/movie/{{ rec.id }}'">
+          <div class="card-poster">
+            <img src="{{ rec.poster }}" alt="{{ rec.title }}" loading="lazy" onerror="this.src='/static/images/placeholder.svg'" />
+            <div class="card-overlay">
+              <div class="card-rating">⭐ {{ rec.rating }}</div>
+              <div class="similarity-badge">{{ (rec.similarity_score * 100)|int }}% match</div>
+              <div class="card-genres">
+                {% for g in rec.genres[:2] %}
+                <span class="tag">{{ g }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          <div class="card-info">
+            <h3>{{ rec.title }}</h3>
+            <p>{{ rec.year }} · {{ rec.director }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty-msg">No recommendations found. Try a different method above.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <footer>
+    <p>Built with Flask · scikit-learn · Python &nbsp;|&nbsp; <a href="/api/recommend/{{ movie.id }}">View API</a></p>
+  </footer>
+
+  <div id="searchResults" class="section hidden" style="position:fixed;top:0;left:0;width:100%;z-index:999;background:var(--bg)">
+    <div class="container">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h2 class="section-title" id="searchQuery">Results</h2>
+        <button onclick="document.getElementById('searchResults').classList.add('hidden')" style="background:none;border:1px solid var(--border);color:var(--text);padding:.5rem 1rem;cursor:pointer;border-radius:4px">✕ Close</button>
+      </div>
+      <div id="searchGrid" class="movie-grid"></div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

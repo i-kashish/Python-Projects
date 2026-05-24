@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CineMatch — Movie Recommendations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-bg"></div>
+    <nav class="navbar">
+      <div class="logo">🎬 CineMatch</div>
+      <div class="search-bar">
+        <input id="searchInput" type="text" placeholder="Search movies, genres, directors…" autocomplete="off" />
+        <button id="searchBtn">Search</button>
+      </div>
+    </nav>
+    <div class="hero-content">
+      <h1>Your Personal <span class="accent">Cinema Guide</span></h1>
+      <p>Discover films tailored to your taste using AI-powered recommendations</p>
+    </div>
+  </header>
+
+  <!-- Search Results (hidden by default) -->
+  <section id="searchResults" class="section hidden">
+    <div class="container">
+      <h2 class="section-title">Search Results <span id="searchQuery"></span></h2>
+      <div id="searchGrid" class="movie-grid"></div>
+    </div>
+  </section>
+
+  <!-- Genre Filter -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">Browse by Genre</h2>
+      <div class="genre-chips">
+        <button class="chip active" data-genre="all">All</button>
+        {% for genre in genres %}
+        <button class="chip" data-genre="{{ genre }}">{{ genre }}</button>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- Top Rated -->
+  <section class="section" id="topSection">
+    <div class="container">
+      <h2 class="section-title" id="gridTitle">⭐ Top Rated Films</h2>
+      <div class="movie-grid" id="mainGrid">
+        {% for movie in top_movies %}
+        <div class="movie-card" onclick="window.location='/movie/{{ movie.id }}'">
+          <div class="card-poster">
+            <img src="{{ movie.poster }}" alt="{{ movie.title }}" loading="lazy" onerror="this.src='/static/images/placeholder.svg'" />
+            <div class="card-overlay">
+              <div class="card-rating">⭐ {{ movie.rating }}</div>
+              <div class="card-genres">
+                {% for g in movie.genres[:2] %}
+                <span class="tag">{{ g }}</span>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          <div class="card-info">
+            <h3>{{ movie.title }}</h3>
+            <p>{{ movie.year }} · {{ movie.director }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section how-it-works">
+    <div class="container">
+      <h2 class="section-title center">How It Works</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-icon">🎯</div>
+          <h3>Content-Based</h3>
+          <p>Analyzes genres, director, cast & plot using TF-IDF vectorization to find similar films.</p>
+        </div>
+        <div class="step">
+          <div class="step-icon">👥</div>
+          <h3>Collaborative</h3>
+          <p>Finds patterns in user ratings using item-item cosine similarity on the user-movie matrix.</p>
+        </div>
+        <div class="step">
+          <div class="step-icon">🔀</div>
+          <h3>Hybrid</h3>
+          <p>Blends both approaches (60/40 weighted) for the most accurate, personalized results.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Built with Flask · scikit-learn · Python &nbsp;|&nbsp; <a href="/api/movies" target="_blank">View API</a></p>
+  </footer>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
